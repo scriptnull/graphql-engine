@@ -1,6 +1,8 @@
 {-# LANGUAGE CPP                  #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- Build everything
+
 module Hasura.App where
 
 import           Hasura.Prelude
