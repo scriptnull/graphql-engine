@@ -10,6 +10,9 @@ package cli
 import (
 	"crypto/tls"
 	"crypto/x509"
+
+	// embed is needed for packaging cli-ext natively with cli
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +22,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -98,6 +102,15 @@ const (
 	V2
 	V3
 )
+
+//go:embed _cli_ext_bin/cli-ext-hasura-linux
+var cliExtLinux []byte
+
+//go:embed _cli_ext_bin/cli-ext-hasura-macos
+var cliExtMacOS []byte
+
+//go:embed _cli_ext_bin/cli-ext-hasura-win.exe
+var cliExtWin []byte
 
 // ServerAPIPaths has the custom paths defined for server api
 type ServerAPIPaths struct {
@@ -378,6 +391,8 @@ type ExecutionContext struct {
 	// GlobalConfigFile is the file inside GlobalConfigDir where values are
 	// stored.
 	GlobalConfigFile string
+	// CliExtPath is the path to the cli-ext binary
+	CliExtPath string
 
 	// GlobalConfig holds all the configuration options.
 	GlobalConfig *GlobalConfig
@@ -467,6 +482,11 @@ func (ec *ExecutionContext) Prepare() error {
 		return errors.Wrap(err, "setting up plugins path failed")
 	}
 
+	err = ec.setupCliExt()
+	if err != nil {
+		return errors.Wrap(err, "setting up cli-ext failed")
+	}
+
 	err = ec.setupCodegenAssetsRepo()
 	if err != nil {
 		return errors.Wrap(err, "setting up codegen-assets repo failed")
@@ -516,6 +536,38 @@ func (ec *ExecutionContext) setupPlugins() error {
 		ec.PluginsConfig.Repo.DisableCloneOrUpdate = true
 	}
 	return ec.PluginsConfig.Prepare()
+}
+
+// setupCliExt unpacks the embedded cli-ext binary file
+func (ec *ExecutionContext) setupCliExt() error {
+	// TODO: check if we need to suffix .exe for windows
+	ec.CliExtPath = filepath.Join(ec.GlobalConfigDir, "cli-ext")
+	// skip unpacking cli-ext binary if already
+	if _, err := os.Stat(ec.CliExtPath); err == nil {
+		return nil
+	}
+
+	var cliExtBinaryContent []byte
+	os := runtime.GOOS
+	switch os {
+	case "linux":
+		cliExtBinaryContent = cliExtLinux
+	case "darwin":
+		cliExtBinaryContent = cliExtMacOS
+	case "windows":
+		cliExtBinaryContent = cliExtWin
+	default:
+		return errors.Errorf("unsupported OS for cli-ext: %s", os)
+	}
+
+	err := ioutil.WriteFile(ec.CliExtPath, cliExtBinaryContent, 0755)
+
+	// cliExtBinaryAbsPath, err := filepath.Abs(cliExtBinaryPath)
+	// if err != nil {
+	// 	return errors.Wrap(err, "cannot get absolute path")
+	// }
+	// ec.CliExtPath = cliExtBinaryAbsPath
+	return err
 }
 
 func (ec *ExecutionContext) setupCodegenAssetsRepo() error {

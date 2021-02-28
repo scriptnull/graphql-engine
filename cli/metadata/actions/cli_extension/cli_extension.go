@@ -7,13 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
-
-	"github.com/hasura/graphql-engine/cli"
 
 	gyaml "github.com/ghodss/yaml"
 	"github.com/hasura/graphql-engine/cli/metadata/actions/types"
-	"github.com/hasura/graphql-engine/cli/plugins"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -26,9 +22,9 @@ type Config struct {
 }
 
 // NewCLIExtensionConfig creates CLIExtensionConfig to interact with cli-extension plugin
-func NewCLIExtensionConfig(binDir string, logger *logrus.Logger) *Config {
+func NewCLIExtensionConfig(binPath string, logger *logrus.Logger) *Config {
 	return &Config{
-		binPath: filepath.Join(binDir, plugins.PluginNameToBin(cli.CLIExtPluginName, plugins.IsWindows())),
+		binPath: binPath,
 		logger:  logger,
 	}
 }
@@ -54,6 +50,8 @@ func (c *Config) ConvertMetadataToSDL(toPayload types.SDLToRequest) (toResponse 
 	if err != nil {
 		return
 	}
+	fmt.Println("Running sdl command line 53")
+	fmt.Println(c.binPath)
 	sdlToCmd := exec.Command(c.binPath)
 	args := []string{"sdl", "to", "--input-file", inputFileName, "--output-file", outputFileName}
 	sdlToCmd.Args = append(sdlToCmd.Args, args...)
@@ -94,6 +92,8 @@ func (c *Config) ConvertSDLToMetadata(fromPayload types.SDLFromRequest) (fromRes
 	if err != nil {
 		return
 	}
+	fmt.Println("Running sdl command line 93")
+	fmt.Println(c.binPath)
 	sdlFromCmd := exec.Command(c.binPath)
 	args := []string{"sdl", "from", "--input-file", inputFileName, "--output-file", outputFileName}
 	sdlFromCmd.Args = append(sdlFromCmd.Args, args...)
@@ -135,6 +135,8 @@ func (c *Config) GetActionsCodegen(codegenReq types.ActionsCodegenRequest) (code
 	if err != nil {
 		return
 	}
+	fmt.Println("Running actions-codegen command line 136")
+	fmt.Println(c.binPath)
 	actionsCodegenCmd := exec.Command(c.binPath)
 	args := []string{"actions-codegen", "--input-file", inputFileName, "--output-file", outputFileName}
 	actionsCodegenCmd.Args = append(actionsCodegenCmd.Args, args...)

@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/hasura/graphql-engine/cli"
@@ -34,13 +35,20 @@ type ActionConfig struct {
 }
 
 func New(ec *cli.ExecutionContext, baseDir string) *ActionConfig {
+	binDir := ec.PluginsConfig.Paths.BinPath()
+	binPath := filepath.Join(binDir, plugins.PluginNameToBin(cli.CLIExtPluginName, plugins.IsWindows()))
+
+	if _, err := os.Stat(ec.CliExtPath); err == nil {
+		binPath = ec.CliExtPath
+	}
+
 	cfg := &ActionConfig{
 		MetadataDir:        baseDir,
 		ActionConfig:       ec.Config.ActionConfig,
 		serverFeatureFlags: ec.Version.ServerFeatureFlags,
 		logger:             ec.Logger,
 		pluginsCfg:         ec.PluginsConfig,
-		cliExtensionConfig: cliextension.NewCLIExtensionConfig(ec.PluginsConfig.Paths.BinPath(), ec.Logger),
+		cliExtensionConfig: cliextension.NewCLIExtensionConfig(binPath, ec.Logger),
 		pluginInstallFunc:  ec.InstallPlugin,
 	}
 	return cfg

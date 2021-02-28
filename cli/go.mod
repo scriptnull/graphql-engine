@@ -1,6 +1,6 @@
 module github.com/hasura/graphql-engine/cli
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -33,6 +33,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/ory/dockertest/v3 v3.6.3
 	github.com/parnurzeal/gorequest v0.2.16
