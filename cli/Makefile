@@ -4,6 +4,7 @@ VERSION ?= $(shell ../scripts/get-version.sh)
 PLUGINS_BRANCH ?= master
 OS ?= linux darwin windows
 OUTPUT_DIR := _output
+CLI_EXT_BIN_DIR := _cli_ext_bin
 
 HAS_GOX := $(shell command -v gox;)
 HAS_PKGER := $(shell command -v pkger;)
@@ -24,9 +25,24 @@ ifndef HAS_GOX
 	go get github.com/mitchellh/gox
 endif
 
+.PHONY: build-cli-ext
+.ONESHELL:
+build-cli-ext: SHELL:=/bin/bash
+build-cli-ext:
+	pushd $(PARENT_DIR)/cli-ext
+	npm install
+	npm run build
+	cp -r bin ../cli/$(CLI_EXT_BIN_DIR)
+	popd
+
+.PHONY: clean-cli-ext
+clean-cli-ext:
+	rm -rf "$(CLI_EXT_BIN_DIR)"
+
 # build cli locally, for all given platform/arch
 .PHONY: build
 build: export CGO_ENABLED=0
+build: build-cli-ext
 build:
 	gox -ldflags '-X github.com/hasura/graphql-engine/cli/version.BuildVersion=$(VERSION) -X github.com/hasura/graphql-engine/cli/plugins.IndexBranchRef=$(PLUGINS_BRANCH) -s -w -extldflags "-static"' \
 	-rebuild \
@@ -57,6 +73,7 @@ integration_tests_config_v2:
 test-all: test integration_tests_config_v2 integration_tests_config_v3
 # clean the output directory
 .PHONY: clean
+clean: clean-cli-ext
 clean:
 	rm -rf "$(OUTPUT_DIR)"
 
