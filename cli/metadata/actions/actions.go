@@ -35,6 +35,7 @@ type ActionConfig struct {
 }
 
 func New(ec *cli.ExecutionContext, baseDir string) *ActionConfig {
+	// TODO: remove plugin system reference
 	binDir := ec.PluginsConfig.Paths.BinPath()
 	binPath := filepath.Join(binDir, plugins.PluginNameToBin(cli.CLIExtPluginName, plugins.IsWindows()))
 

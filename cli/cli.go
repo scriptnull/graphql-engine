@@ -540,13 +540,16 @@ func (ec *ExecutionContext) setupPlugins() error {
 
 // setupCliExt unpacks the embedded cli-ext binary file
 func (ec *ExecutionContext) setupCliExt() error {
+	// TODO: handle versions
+	// TODO: SHA verification for cli-ext binary (refer plugin system)
 	// TODO: check if we need to suffix .exe for windows
 	ec.CliExtPath = filepath.Join(ec.GlobalConfigDir, "cli-ext")
-	// skip unpacking cli-ext binary if already
+	// TODO: overwrite cli-ext binary if already exits
 	if _, err := os.Stat(ec.CliExtPath); err == nil {
 		return nil
 	}
 
+	// TODO: use +build flag to just include only one binary content based on platform
 	var cliExtBinaryContent []byte
 	os := runtime.GOOS
 	switch os {
