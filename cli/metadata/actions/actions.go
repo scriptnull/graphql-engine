@@ -3,14 +3,12 @@ package actions
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/hasura/graphql-engine/cli"
 	cliextension "github.com/hasura/graphql-engine/cli/metadata/actions/cli_extension"
 	"github.com/hasura/graphql-engine/cli/metadata/actions/editor"
 	"github.com/hasura/graphql-engine/cli/metadata/actions/types"
-	"github.com/hasura/graphql-engine/cli/plugins"
 	"github.com/hasura/graphql-engine/cli/util"
 	"github.com/hasura/graphql-engine/cli/version"
 	"github.com/pkg/errors"
@@ -27,40 +25,23 @@ type ActionConfig struct {
 	MetadataDir        string
 	ActionConfig       *types.ActionExecutionConfig
 	serverFeatureFlags *version.ServerFeatureFlags
-	pluginsCfg         *plugins.Config
 	cliExtensionConfig *cliextension.Config
-	pluginInstallFunc  func(string, bool) error
 
 	logger *logrus.Logger
 }
 
 func New(ec *cli.ExecutionContext, baseDir string) *ActionConfig {
-	// TODO: remove plugin system reference
-	binDir := ec.PluginsConfig.Paths.BinPath()
-	binPath := filepath.Join(binDir, plugins.PluginNameToBin(cli.CLIExtPluginName, plugins.IsWindows()))
-
-	if _, err := os.Stat(ec.CliExtPath); err == nil {
-		binPath = ec.CliExtPath
-	}
-
 	cfg := &ActionConfig{
 		MetadataDir:        baseDir,
 		ActionConfig:       ec.Config.ActionConfig,
 		serverFeatureFlags: ec.Version.ServerFeatureFlags,
 		logger:             ec.Logger,
-		pluginsCfg:         ec.PluginsConfig,
-		cliExtensionConfig: cliextension.NewCLIExtensionConfig(binPath, ec.Logger),
-		pluginInstallFunc:  ec.InstallPlugin,
+		cliExtensionConfig: cliextension.NewCLIExtensionConfig(ec.CliExtPath, ec.Logger),
 	}
 	return cfg
 }
 
 func (a *ActionConfig) Create(name string, introSchema interface{}, deriveFrom string) error {
-	// Ensure CLI Extesnion
-	err := a.pluginInstallFunc(cli.CLIExtPluginName, true)
-	if err != nil {
-		return err
-	}
 	// Read the content of graphql file
 	graphqlFileContent, err := a.GetActionsGraphQLFileContent()
 	if err != nil {
@@ -207,11 +188,6 @@ input SampleInput {
 }
 
 func (a *ActionConfig) Codegen(name string, derivePld types.DerivePayload) error {
-	err := a.pluginInstallFunc(cli.CLIExtPluginName, true)
-	if err != nil {
-		return err
-	}
-
 	graphqlFileContent, err := a.GetActionsGraphQLFileContent()
 	if err != nil {
 		return errors.Wrapf(err, "error in reading %s file", graphqlFileName)
@@ -273,10 +249,6 @@ func (a *ActionConfig) Build(metadata *yaml.MapSlice) error {
 			a.logger.WithField("metadata_plugin", "actions").Warnf("Skipping building %s", graphqlFileName)
 		}
 		return nil
-	}
-	err := a.pluginInstallFunc(cli.CLIExtPluginName, true)
-	if err != nil {
-		return err
 	}
 	// Read actions.graphql
 	graphqlFileContent, err := a.GetActionsGraphQLFileContent()
@@ -395,10 +367,6 @@ func (a *ActionConfig) Export(metadata yaml.MapSlice) (map[string][]byte, error)
 	if !a.serverFeatureFlags.HasAction {
 		a.logger.Debugf("Skipping creating %s and %s", actionsFileName, graphqlFileName)
 		return make(map[string][]byte), nil
-	}
-	err := a.pluginInstallFunc(cli.CLIExtPluginName, true)
-	if err != nil {
-		return nil, err
 	}
 	var actions yaml.MapSlice
 	for _, item := range metadata {

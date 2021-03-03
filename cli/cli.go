@@ -948,6 +948,7 @@ func (ec *ExecutionContext) setVersion() {
 // InstallPlugin installs a plugin depending on forceCLIVersion.
 // If forceCLIVersion is set, it uses ec.Version.CLISemver version for the plugin to be installed.
 // Else, it installs the latest version of the plugin
+// TODO(scriptnull): check if this function is used anywhere else
 func (ec ExecutionContext) InstallPlugin(name string, forceCLIVersion bool) error {
 	var version *semver.Version
 	if forceCLIVersion {

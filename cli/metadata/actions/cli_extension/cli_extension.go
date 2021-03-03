@@ -15,13 +15,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Config represents the object to interact with cli-ext plugin
+// Config represents the object to interact with cli-ext
 type Config struct {
 	binPath string
 	logger  *logrus.Logger
 }
 
-// NewCLIExtensionConfig creates CLIExtensionConfig to interact with cli-extension plugin
+// NewCLIExtensionConfig creates CLIExtensionConfig to interact with cli-extension
 func NewCLIExtensionConfig(binPath string, logger *logrus.Logger) *Config {
 	return &Config{
 		binPath: binPath,
